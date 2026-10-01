@@ -1,0 +1,252 @@
+---
+/**
+ * The home page graph, rendered entirely at build time.
+ *
+ * - Works with no JavaScript: the stage is a horizontal scroll-snap strip,
+ *   stop links are plain anchors, wires are static SVG.
+ * - Two pre-computed layouts (wide, medium) switch by media query; under
+ *   768px CSS stacks one column per screen and hides the wires.
+ * - <kh-graph> (src/elements/kh-graph.ts) adds drag-to-pan, stop tracking,
+ *   arrow keys and wire highlighting.
+ */
+import { graph, layoutGraph, type Layout } from '../../lib/graph';
+import { resolveFeed, type ResolvedFeed } from '../../lib/feeds';
+import GraphNode from './GraphNode.astro';
+import FocusCard from './FocusCard.astro';
+
+const includeDrafts = import.meta.env.DEV;
+const wide = layoutGraph(graph, 'wide', { includeDrafts });
+const medium = layoutGraph(graph, 'medium', { includeDrafts });
+const mediumById = new Map(medium.nodes.map((n) => [n.id, n]));
+const mediumStop = new Map(medium.stops.map((s) => [s.id, s]));
+
+const PAD_X = 200;
+const PAD_Y = 56;
+const halfW = (l: Layout) => Math.max(-l.bounds.minX, l.bounds.maxX) + PAD_X;
+const halfH = (l: Layout) => Math.max(-l.bounds.minY, l.bounds.maxY) + PAD_Y;
+
+const feeds = new Map<string, ResolvedFeed>();
+await Promise.all(
+  wide.nodes.filter((n) => n.node.feed).map(async (n) => feeds.set(n.id, await resolveFeed(n.node.feed!))),
+);
+
+type Col = { id: string; label: string; index: number; x: number };
+const columns: Col[] = [...wide.columns, { id: graph.focus.id, label: 'Now', index: 0, x: 0 }].sort((a, b) => a.index - b.index);
+const mediumColX = new Map(medium.columns.map((c) => [c.id, c.x]));
+const nodesIn = (colId: string) => wide.nodes.filter((n) => n.node.column === colId).sort((a, b) => a.node.row - b.node.row);
+const stopsFor = (colId: string) => wide.stops.filter((s) => graph.stops.find((g) => g.id === s.id)?.target === colId);
+
+const portColors = ['var(--c-red)', 'var(--c-green)', 'var(--c-blue)'];
+const worldVars = [
+  `--half-w:${halfW(wide)}px`, `--half-h:${halfH(wide)}px`, `--cw:${wide.metrics.cardW}px`, `--ch:${wide.metrics.cardH}px`,
+  `--fw:${wide.metrics.focusW}px`, `--fh:${wide.metrics.focusH}px`,
+  `--half-w-md:${halfW(medium)}px`, `--half-h-md:${halfH(medium)}px`, `--cw-md:${medium.metrics.cardW}px`,
+  `--fw-md:${medium.metrics.focusW}px`, `--fh-md:${medium.metrics.focusH}px`,
+].join(';');
+---
+
+<kh-graph initial-stop={graph.initialStop}>
+  <div class="stage" data-stage>
+    <div class="world" style={worldVars}>
+      {[wide, medium].map((l) => (
+        <svg
+          class={`wires wires--${l.breakpoint}`}
+          viewBox={`${-halfW(l)} ${-halfH(l)} ${halfW(l) * 2} ${halfH(l) * 2}`}
+          aria-hidden="true"
+        >
+          {l.wires.map((w) => (
+            <path d={w.d} data-from={w.from} data-to={w.to} data-style={w.style} />
+          ))}
+          {l.ports.map((p, i) => (
+            <g class="port" transform={`translate(${p.x} ${p.y})`}>
+              <circle r="6.5" class="port-ring" />
+              <circle r="2.6" fill={portColors[i % 3]} />
+              <path d="M-11 0h22M0 -11v22" class="port-cross" />
+            </g>
+          ))}
+        </svg>
+      ))}
+
+      {columns.map((col) => (
+        <section
+          class:list={['col', { 'col--focus': col.index === 0 }]}
+          id={`col-${col.id}`}
+          aria-labelledby={`col-${col.id}-label`}
+        >
+          {stopsFor(col.id).map((s) => (
+            <span
+              class="snap"
+              id={`stop-${s.id}`}
+              data-stop={s.id}
+              style={`--sx:${s.x}px;--sx-md:${mediumStop.get(s.id)?.x ?? s.x}px`}
+            />
+          ))}
+          <h2
+            class:list={['col-label mono', { 'visually-hidden': col.index !== 0 && nodesIn(col.id).length === 0 }]}
+            id={`col-${col.id}-label`}
+            style={`--x:${col.x}px;--x-md:${mediumColX.get(col.id) ?? 0}px`}
+          >
+            {col.label}
+          </h2>
+          {col.index === 0 ? (
+            <div class="slot slot--focus">
+              <FocusCard />
+            </div>
+          ) : (
+            <ol>
+              {nodesIn(col.id).map((n) => {
+                const m = mediumById.get(n.id)!;
+                return (
+                  <li class="slot" style={`--x:${n.x}px;--y:${n.y}px;--x-md:${m.x}px;--y-md:${m.y}px`}>
+                    <GraphNode node={n.node} feed={feeds.get(n.id)} />
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </section>
+      ))}
+    </div>
+  </div>
+
+  <nav class="stops mono" aria-label="Graph sections">
+    {graph.stops.map((s) => (
+      <a href={`#stop-${s.id}`} data-stop-link={s.id} aria-current={s.id === graph.initialStop ? 'true' : undefined}>
+        {s.label}
+      </a>
+    ))}
+  </nav>
+</kh-graph>
+
+<script is:inline define:vars={{ initial: graph.initialStop }}>
+  // Open on the initial stop before first paint; no framework needed.
+  (function () {
+    var stage = document.querySelector('[data-stage]');
+    var marker = document.getElementById('stop-' + initial);
+    if (!stage || !marker) return;
+    var r = marker.getBoundingClientRect(), s = stage.getBoundingClientRect();
+    stage.scrollLeft += r.left + r.width / 2 - (s.left + s.width / 2);
+  })();
+</script>
+
+<script>
+  import '../../elements/kh-graph';
+</script>
+
+<style>
+  @layer components {
+    kh-graph { display: block; }
+
+    .stage {
+      overflow-x: auto;
+      overflow-y: hidden;
+      scroll-snap-type: x mandatory;
+      overscroll-behavior-x: contain;
+      scrollbar-width: none;
+      mask-image: linear-gradient(90deg, transparent 0, #000 8%, #000 92%, transparent 100%);
+    }
+    .stage::-webkit-scrollbar { display: none; }
+    .stage[data-dragging] { scroll-snap-type: none; cursor: grabbing; }
+
+    .world {
+      position: relative;
+      width: calc(var(--half-w) * 2);
+      height: calc(var(--half-h) * 2);
+    }
+
+    .wires {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+    .wires--medium { display: none; }
+    .wires path:not(.port-cross) { fill: none; stroke: var(--c-wire); stroke-width: 1.2; transition: stroke 150ms; }
+    .wires path[data-style='spine'] { stroke: var(--c-wire-spine); stroke-dasharray: 2 5; }
+    .wires path[data-hot] { stroke: var(--c-wire-hot); stroke-width: 1.8; }
+    .port-ring { fill: var(--c-bg); stroke: var(--c-ink); stroke-width: 1; }
+    .port-cross { stroke: var(--c-ink); stroke-width: 1; }
+
+    .snap {
+      position: absolute;
+      top: 0;
+      left: calc(50% + var(--sx));
+      width: 1px;
+      height: 1px;
+      scroll-snap-align: center;
+    }
+
+    .col-label {
+      position: absolute;
+      top: var(--s-4);
+      left: calc(50% + var(--x) - var(--cw) / 2);
+      width: var(--cw);
+      text-align: center;
+      color: var(--c-ink-quiet);
+      font-weight: 400;
+    }
+
+    .slot {
+      position: absolute;
+      left: calc(50% + var(--x));
+      top: calc(50% + var(--y));
+      width: var(--cw);
+      height: var(--ch);
+    }
+    .slot--focus {
+      left: calc(50% - var(--fw) / 2);
+      top: calc(50% - var(--fh) / 2);
+      width: var(--fw);
+      height: var(--fh);
+    }
+
+    .stops {
+      display: flex;
+      justify-content: center;
+      gap: var(--s-1);
+      padding: var(--s-4) var(--gutter);
+    }
+    .stops a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding: 0 var(--s-4);
+      color: var(--c-ink-faint);
+      border-bottom: 2px solid transparent;
+    }
+    .stops a[aria-current='true'] { color: var(--c-ink); border-bottom-color: var(--c-ink); }
+
+    /* Medium: same picture, tighter pitch. */
+    @media (max-width: 1279px) {
+      .world { width: calc(var(--half-w-md) * 2); height: calc(var(--half-h-md) * 2); }
+      .wires--wide { display: none; }
+      .wires--medium { display: block; }
+      .snap { left: calc(50% + var(--sx-md)); }
+      .col-label { left: calc(50% + var(--x-md) - var(--cw-md) / 2); width: var(--cw-md); }
+      .slot { left: calc(50% + var(--x-md)); top: calc(50% + var(--y-md)); width: var(--cw-md); }
+      .slot--focus { left: calc(50% - var(--fw-md) / 2); top: calc(50% - var(--fh-md) / 2); width: var(--fw-md); height: var(--fh-md); }
+    }
+
+    /* Narrow: one column per screen, swiped. No wires; phase 2 adds edge stubs. */
+    @media (max-width: 767px) {
+      .stage { mask-image: none; }
+      .world { display: flex; width: auto; height: auto; }
+      .wires { display: none; }
+      .col {
+        flex: 0 0 100%;
+        display: flex;
+        flex-direction: column;
+        gap: var(--s-3);
+        padding: var(--s-4) var(--gutter);
+        scroll-snap-align: center;
+      }
+      .snap { position: static; width: 100%; height: 0; scroll-snap-align: none; }
+      .col-label, .slot, .slot--focus { position: static; width: auto; height: auto; }
+      .col-label { text-align: left; }
+      ol { display: flex; flex-direction: column; gap: var(--s-3); }
+      .stops { position: sticky; bottom: 0; background: var(--c-bg); }
+    }
+  }
+</style>

@@ -1,0 +1,29 @@
+---
+const social = [
+  { href: 'mailto:[EMAIL]', label: 'Email' },
+  { href: 'https://www.linkedin.com/in/kevin-hyde-fullstack', label: 'LinkedIn' },
+  { href: 'https://github.com/futurethang', label: 'GitHub' },
+];
+---
+
+<footer id="contact" class="site-footer mono">
+  <span>Seattle, WA</span>
+  <ul>
+    {social.map((s) => <li><a href={s.href}>{s.label}</a></li>)}
+  </ul>
+  <span>© Kevin Hyde</span>
+</footer>
+
+<style>
+  @layer components {
+    .site-footer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: var(--s-4);
+      padding: var(--s-8) var(--gutter);
+      color: var(--c-ink-faint);
+    }
+    ul { display: flex; gap: var(--s-6); }
+  }
+</style>

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "astro",
+  "redirects": [
+    { "source": "/samples", "destination": "/", "permanent": true },
+    { "source": "/samples/:slug", "destination": "/", "permanent": true },
+    { "source": "/caseStudy", "destination": "/work/illuminate", "permanent": true },
+    { "source": "/caseStudy/:slug", "destination": "/work/illuminate", "permanent": true },
+    { "source": "/creative-catalog", "destination": "/studio", "permanent": true },
+    { "source": "/creative-catalog/:slug", "destination": "/studio", "permanent": true },
+    { "source": "/artworks", "destination": "/studio", "permanent": true },
+    { "source": "/artworks/:slug", "destination": "/studio", "permanent": true },
+    { "source": "/projects", "destination": "/lab", "permanent": true },
+    { "source": "/projects/:slug", "destination": "/lab", "permanent": true },
+    { "source": "/html/resume_sr_UI_engineer.html", "destination": "/resume", "permanent": true }
+  ],
+  "headers": [
+    {
+      "source": "/_astro/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    }
+  ]
+}

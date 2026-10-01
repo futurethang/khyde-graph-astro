@@ -1,0 +1,59 @@
+---
+import type { GraphNode } from '../../lib/graph';
+import type { ResolvedFeed } from '../../lib/feeds';
+
+interface Props {
+  node: GraphNode;
+  feed?: ResolvedFeed;
+}
+
+const { node, feed } = Astro.props;
+const latest = feed?.fresh ? feed.items[0] : undefined;
+const Tag = node.href ? 'a' : 'div';
+const external = node.href?.startsWith('http');
+---
+
+<Tag
+  class="node"
+  data-node={node.id}
+  data-kind={node.kind}
+  data-draft={node.draft ? '' : undefined}
+  href={node.href}
+  rel={external ? 'noopener' : undefined}
+  style={`--row:${node.row}`}
+>
+  <span class="kicker mono">{node.kicker}{node.draft && ' · draft'}</span>
+  <span class="body">
+    <span class="title">{node.title}</span>
+    <span class="summary">{latest ? latest.title : node.summary}</span>
+  </span>
+</Tag>
+
+<style>
+  @layer components {
+    .node {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: var(--c-surface);
+      border: 1px solid var(--c-line);
+      color: var(--c-ink);
+      transition: border-color 150ms, opacity 400ms;
+    }
+    .node[data-kind='history'] {
+      background: var(--c-surface-history);
+      border-style: dashed;
+      border-color: var(--c-line-history);
+    }
+    .node[data-draft] { outline: 1px dashed var(--c-amber); outline-offset: 3px; }
+    a.node:hover, a.node:focus-visible, .node[data-hot] { border-color: var(--c-wire-hot); color: var(--c-ink); }
+    .kicker {
+      padding: var(--s-2) var(--s-3);
+      border-bottom: 1px solid var(--c-line-quiet);
+      color: var(--c-ink-quiet);
+    }
+    .body { display: flex; flex-direction: column; gap: var(--s-1); padding: var(--s-3); }
+    .title { font-size: var(--fs-card-title); font-weight: 700; line-height: 1.15; letter-spacing: -0.01em; }
+    .summary { font-size: var(--fs-small); line-height: 1.4; color: var(--c-ink-muted); }
+  }
+</style>

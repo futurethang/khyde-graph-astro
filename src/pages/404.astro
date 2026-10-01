@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Disconnected node — Kevin Hyde">
+  <section class="lost">
+    <div class="node">
+      <span class="kicker mono">404 · disconnected</span>
+      <span class="body">
+        <span class="title">This node has no wires.</span>
+        <a class="back mono" href="/">Reconnect to the graph →</a>
+      </span>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .lost { display: grid; place-items: center; min-height: 60dvh; padding: var(--gutter); }
+  .node { width: min(100%, 320px); background: var(--c-surface); border: 1px dashed var(--c-line-history); }
+  .kicker { display: block; padding: var(--s-2) var(--s-3); border-bottom: 1px solid var(--c-line-quiet); color: var(--c-ink-quiet); }
+  .body { display: flex; flex-direction: column; gap: var(--s-3); padding: var(--s-4) var(--s-3); }
+  .title { font-size: var(--fs-card-title); font-weight: 700; }
+  .back { color: var(--c-amber); }
+</style>

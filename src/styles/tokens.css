@@ -1,0 +1,72 @@
+/*
+ * Design tokens from design N (docs/design/N-PanGraph.dc.html).
+ * Dark only for v1. Every color, size and font in components comes from here.
+ */
+@layer tokens {
+  :root {
+    color-scheme: dark;
+
+    /* Ground and surfaces */
+    --c-bg: #0d0d0f;
+    --c-dot: #222228;
+    --c-surface: #16161a;
+    --c-surface-history: #111114;
+    --c-line: #34343c;
+    --c-line-quiet: #2c2c33;
+    --c-line-history: #55545c;
+
+    /* Ink */
+    --c-ink: #eceae4;
+    --c-ink-strong: #ffffff;
+    --c-ink-muted: #b5b3ab;
+    --c-ink-quiet: #a9a79f;
+    --c-ink-faint: #8e8c85;
+
+    /* Focus card (the one light card) */
+    --c-focus-bg: #eceae4;
+    --c-focus-ink: #111113;
+    --c-focus-muted: #3f3e3a;
+    --c-focus-line: #c9c7c0;
+
+    /* Wires */
+    --c-wire: #55545c;
+    --c-wire-spine: #6e6d75;
+    --c-wire-hot: #eceae4;
+
+    /* RGB channel split (wordmark, port dots) */
+    --c-red: #ff3b3b;
+    --c-green: #2be36b;
+    --c-blue: #3b6bff;
+
+    /* Illustration palette */
+    --c-amber: #e8b26a;
+    --c-rust: #c4553a;
+    --c-navy: #2f3b5c;
+    --c-bone: #ece4d2;
+
+    /* Type */
+    --font-sans: 'Archivo Variable', 'Helvetica Neue', Arial, sans-serif;
+    --font-mono: 'Martian Mono Variable', ui-monospace, 'SF Mono', Menlo, monospace;
+    --fs-kicker: 0.625rem;   /* 10px, mono, tracked */
+    --fs-small: 0.8125rem;   /* 13px */
+    --fs-body: 1rem;
+    --fs-card-title: 1.125rem;
+    --fs-lead: 1.375rem;
+    --fs-wordmark: clamp(4.5rem, 10vw, 9.5rem);
+    --tracking-kicker: 0.06em;
+    --tracking-tight: -0.04em;
+
+    /* Space */
+    --gutter: clamp(1rem, 5.5vw, 5rem);
+    --s-1: 0.25rem;
+    --s-2: 0.5rem;
+    --s-3: 0.75rem;
+    --s-4: 1rem;
+    --s-6: 1.5rem;
+    --s-8: 2rem;
+
+    /* Motion */
+    --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+    --dur-pan: 600ms;
+  }
+}

@@ -1,0 +1,47 @@
+---
+import { graph } from '../../lib/graph';
+const { focus } = graph;
+---
+
+<article id="focus" class="focus" data-node={focus.id} tabindex="-1">
+  <header class="kicker mono"><span>{focus.kicker}</span><span>Seattle</span></header>
+  <svg class="illus" viewBox="0 0 380 112" aria-hidden="true">
+    <path d="M104 38 C 150 38, 140 72, 184 72" stroke="var(--c-bone)" stroke-width="2" fill="none" />
+    <path d="M104 38 C 160 38, 222 28, 268 28" stroke="var(--c-amber)" stroke-width="2" fill="none" />
+    <path d="M240 72 C 264 72, 258 86, 282 86" stroke="var(--c-bone)" stroke-width="2" fill="none" />
+    <rect x="36" y="22" width="68" height="32" rx="5" fill="var(--c-amber)" />
+    <rect x="184" y="57" width="56" height="30" rx="5" fill="var(--c-bone)" />
+    <rect x="268" y="14" width="68" height="28" rx="5" fill="var(--c-rust)" />
+    <rect x="282" y="72" width="56" height="28" rx="5" fill="var(--c-navy)" stroke="var(--c-bone)" stroke-width="2" />
+  </svg>
+  <div class="body">
+    <h2 class="title">{focus.title}</h2>
+    <p class="summary">{focus.summary}</p>
+    {focus.href && <a class="cta mono" href={focus.href}>{focus.cta ?? 'More'} →</a>}
+  </div>
+</article>
+
+<style>
+  @layer components {
+    .focus {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: var(--c-focus-bg);
+      color: var(--c-focus-ink);
+      box-shadow: 0 30px 80px rgb(0 0 0 / 0.5);
+    }
+    .kicker {
+      display: flex;
+      justify-content: space-between;
+      padding: var(--s-2) var(--s-3);
+      border-bottom: 1px solid var(--c-focus-line);
+    }
+    .illus { width: 100%; height: auto; background: #1e2233; }
+    .body { display: flex; flex-direction: column; gap: var(--s-2); padding: var(--s-4) var(--s-3); flex-grow: 1; }
+    .title { font-size: 1.625rem; line-height: 1.05; font-weight: 800; letter-spacing: -0.02em; }
+    .summary { font-size: 0.875rem; line-height: 1.45; color: var(--c-focus-muted); }
+    .cta { margin-top: auto; color: var(--c-focus-ink); }
+    .cta:hover { color: var(--c-rust); }
+  }
+</style>
